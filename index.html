@@ -13,7 +13,7 @@
     .header-date{font-size:14px;opacity:.85}
     .header-day{font-size:14px;font-weight:600;background:rgba(255,255,255,.15);padding:2px 12px;border-radius:20px}
     .header-title{font-size:22px;font-weight:700;margin:8px 0 4px;letter-spacing:.5px}
-    .header-sub{font-size:14px;opacity:.8;margin-bottom:14px}
+    .header-sub{font-size:14px;opacity:.8;margin-bottom:6px}.day-counter{font-size:13px;opacity:.75;margin-bottom:14px;font-weight:500}
     .progress-area{display:flex;align-items:center;gap:12px}
     .progress-track{flex:1;height:6px;background:rgba(255,255,255,.2);border-radius:3px;overflow:hidden}
     .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#a5f3d0,#34d399);border-radius:3px;transition:width .4s ease}
@@ -94,6 +94,7 @@
     </div>
     <div class="header-title" id="workoutName"></div>
     <div class="header-sub" id="workoutSub"></div>
+    <div class="day-counter" id="dayCounter">💪 健身第 160 天</div>
     <div class="progress-area">
       <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
       <div class="progress-text" id="progressText">0 / 0</div>
@@ -153,6 +154,10 @@ var defaultWorkouts = {
     ]}
   ]}
 };
+
+var startDate = new Date(2026,0,6);
+var dayCounterEl = document.getElementById("dayCounter");
+function calcDayNum(){var n=new Date();var d=Math.floor((n-startDate)/86400000)+1;return d>0?d:1}
 
 var dayMap = {1:"mon_fri",2:"tue_sat",3:"wed",4:"thu",5:"mon_fri",6:"tue_sat",0:"sun"};
 
@@ -366,6 +371,7 @@ function renderDay(k){
 function init(){
   var now=new Date(),dow=now.getDay();
   todayKey=dayMap[dow];currentDay=todayKey;
+  dayCounterEl.textContent = "💪 健身第 " + calcDayNum() + " 天";
   renderDay(todayKey);
 
   resetBtn.addEventListener("click",function(){
