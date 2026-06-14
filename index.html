@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>健身打卡 - 三分化训练</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans SC",sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px 48px}
+    .container{max-width:640px;width:100%}
+    .header{background:linear-gradient(135deg,#1e3a5f 0%,#2d5f8a 100%);border-radius:16px;padding:24px 20px 20px;color:#fff;margin-bottom:20px;box-shadow:0 4px 12px rgba(30,58,95,0.25)}
+    .header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+    .header-date{font-size:14px;opacity:.85}
+    .header-day{font-size:14px;font-weight:600;background:rgba(255,255,255,.15);padding:2px 12px;border-radius:20px}
+    .header-title{font-size:22px;font-weight:700;margin:8px 0 4px;letter-spacing:.5px}
+    .header-sub{font-size:14px;opacity:.8;margin-bottom:14px}
+    .progress-area{display:flex;align-items:center;gap:12px}
+    .progress-track{flex:1;height:6px;background:rgba(255,255,255,.2);border-radius:3px;overflow:hidden}
+    .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#a5f3d0,#34d399);border-radius:3px;transition:width .4s ease}
+    .progress-text{font-size:15px;font-weight:600;white-space:nowrap;min-width:66px;text-align:right}
+    .day-nav{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+    .day-nav::-webkit-scrollbar{height:3px}
+    .day-nav::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:2px}
+    .day-btn{flex-shrink:0;padding:8px 14px;border-radius:24px;border:none;font-size:13px;font-weight:500;cursor:pointer;background:#e2e8f0;color:#475569;transition:all .2s}
+    .day-btn:hover{background:#cbd5e1}
+    .day-btn.active{background:#1e3a5f;color:#fff;box-shadow:0 2px 6px rgba(30,58,95,.3)}
+    .day-btn.today{position:relative}
+    .day-btn.today::after{content:"今天";position:absolute;top:-6px;right:-4px;font-size:9px;background:#ef4444;color:#fff;padding:0 5px;border-radius:8px;line-height:16px}
+    .rest-card{background:#fff;border-radius:16px;padding:48px 24px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+    .rest-icon{font-size:48px;margin-bottom:12px}
+    .rest-title{font-size:20px;font-weight:700;color:#1e293b;margin-bottom:6px}
+    .rest-desc{font-size:14px;color:#64748b}
+    .section{background:#fff;border-radius:14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden}
+    .section-header{display:flex;align-items:center;padding:12px 18px;font-size:14px;font-weight:600;color:#334155;border-bottom:1px solid #f1f5f9}
+    .section-header .section-icon{margin-right:8px;font-size:16px}
+    .section-header .section-title{flex:1}
+    .section-header.highlight{background:#fef9c3;color:#854d0e;border-bottom-color:#fde68a}
+    .section-note{font-size:12px;font-weight:400;color:#a16207;margin-left:8px}
+    .add-btn{flex-shrink:0;width:28px;height:28px;border-radius:8px;border:1.5px dashed #94a3b8;background:transparent;color:#64748b;font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+    .add-btn:hover{background:#e2e8f0;border-color:#64748b;color:#334155}
+    .exercise-item{display:flex;align-items:flex-start;padding:10px 18px;border-bottom:1px solid #f8fafc;transition:all .25s;cursor:pointer;position:relative}
+    .exercise-item:last-child{border-bottom:none}
+    .exercise-item:hover{background:#f8fafc}
+    .exercise-item.done{opacity:.5;background:#f1f5f9}
+    .exercise-item.done:hover{background:#ecf0f4}
+    .exercise-item.done .exercise-name{color:#94a3b8;text-decoration:line-through}
+    .checkbox-wrap{flex-shrink:0;width:22px;height:22px;margin-top:1px;margin-right:14px;position:relative}
+    .checkbox-wrap input{position:absolute;opacity:0;cursor:pointer;width:100%;height:100%;z-index:1}
+    .checkmark{position:absolute;top:0;left:0;width:22px;height:22px;border:2px solid #cbd5e1;border-radius:6px;background:#fff;transition:all .2s}
+    .checkbox-wrap input:checked~.checkmark{background:#10b981;border-color:#10b981;transform:scale(1.05)}
+    .checkmark::after{content:"";position:absolute;display:none;left:7px;top:3px;width:5px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+    .checkbox-wrap input:checked~.checkmark::after{display:block}
+    .exercise-info{flex:1;min-width:0;display:flex;align-items:center;gap:8px}
+    .exercise-name{font-size:15px;font-weight:500;color:#1e293b;line-height:1.4}
+    .del-btn{flex-shrink:0;width:24px;height:24px;border-radius:6px;border:none;background:transparent;color:#cbd5e1;font-size:14px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:all .2s}
+    .exercise-item:hover .del-btn{opacity:1}
+    .del-btn:hover{background:#fee2e2;color:#ef4444}
+    .actions{display:flex;gap:8px;margin-bottom:16px}
+    .action-btn{flex:1;padding:10px 16px;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+    .action-btn.check-all{background:#10b981;color:#fff}
+    .action-btn.check-all:hover{background:#059669}
+    .action-btn.uncheck-all{background:#e2e8f0;color:#475569}
+    .action-btn.uncheck-all:hover{background:#cbd5e1}
+    .reset-area{display:flex;justify-content:center;gap:12px;margin-top:20px}
+    .reset-btn{padding:8px 24px;border:1px solid #cbd5e1;border-radius:24px;background:#fff;color:#64748b;font-size:13px;cursor:pointer;transition:all .2s}
+    .reset-btn:hover{background:#f1f5f9;border-color:#94a3b8;color:#475569}
+    .reset-btn.danger:hover{background:#fef2f2;border-color:#fca5a5;color:#dc2626}
+    .add-input-wrap{display:none;align-items:center;gap:8px;padding:10px 18px 10px 54px;border-bottom:1px solid #f1f5f9}
+    .add-input-wrap.show{display:flex}
+    .add-input-wrap input{flex:1;padding:6px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;outline:none;background:#f8fafc;transition:border .2s}
+    .add-input-wrap input:focus{border-color:#2d5f8a;background:#fff}
+    .add-input-wrap .confirm-btn{padding:6px 14px;border:none;border-radius:8px;background:#1e3a5f;color:#fff;font-size:13px;cursor:pointer}
+    .add-input-wrap .confirm-btn:hover{background:#2d5f8a}
+    .add-input-wrap .cancel-btn{padding:6px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#64748b;font-size:13px;cursor:pointer}
+    .add-input-wrap .cancel-btn:hover{background:#f1f5f9}
+    @media(max-width:480px){
+      body{padding:16px 12px 32px}
+      .header{padding:20px 16px 16px}
+      .header-title{font-size:19px}
+      .day-btn{padding:6px 11px;font-size:12px}
+      .exercise-item{padding:10px 14px}
+      .section-header{padding:12px 14px}
+      .add-input-wrap{padding-left:50px}
+      .action-btn{font-size:13px;padding:9px 12px}
+    }
+  </style>
+</head>
+<body>
+<div class="container" id="app">
+  <div class="header">
+    <div class="header-top">
+      <span class="header-date" id="dateDisplay"></span>
+      <span class="header-day" id="dayDisplay"></span>
+    </div>
+    <div class="header-title" id="workoutName"></div>
+    <div class="header-sub" id="workoutSub"></div>
+    <div class="progress-area">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-text" id="progressText">0 / 0</div>
+    </div>
+  </div>
+  <div class="day-nav" id="dayNav"></div>
+  <div class="actions" id="actionArea">
+    <button class="action-btn check-all" id="checkAllBtn">✅ 一键全部打卡</button>
+    <button class="action-btn uncheck-all" id="uncheckAllBtn">↩️ 取消全部</button>
+  </div>
+  <div id="content"></div>
+  <div class="reset-area">
+    <button class="reset-btn" id="resetBtn">重置今日打卡</button>
+    <button class="reset-btn danger" id="resetWorkoutBtn">恢复默认动作</button>
+  </div>
+</div>
+<script>var DAYS_CN = ["日","一","二","三","四","五","六"];
+var idCounter = 1000;
+function genId(){return "ex_"+(++idCounter)+"_"+Date.now();}
+
+var defaultWorkouts = {
+  mon_fri: {label:"周一/五",name:"胸 + 三头 + 肩前中束",sections:[
+    {name:"热身",icon:"🔥",items:[{id:"a01",text:"弹力带绕肩 10次×2"},{id:"a02",text:"弹力带水平外旋 15次"},{id:"a03",text:"空杆平板卧推 15次"}]},
+    {name:"重点动作",icon:"⭐",highlight:true,note:"改善肱骨前移",items:[{id:"a04",text:"面拉 2×15 (15)"}]},
+    {name:"正式训练",icon:"💪",items:[
+      {id:"a05",text:"哑铃推举 3×6-10 (上重量) (17.5-15)"},
+      {id:"a06",text:"哑铃侧平举 4×12-15 (最后一组递减组力竭) (7.5-5)"},
+      {id:"a07",text:"哑铃上斜推胸(30°) 3×10-12 (17.5-15)"},
+      {id:"a08",text:"杠铃平板卧推 3×8-10 (35)"},
+      {id:"a09",text:"蝴蝶机夹胸 3×12-15 (45-40)"}
+    ]}
+  ]},
+  tue_sat: {label:"周二/六",name:"背 + 二头 + 肩后束",sections:[
+    {name:"热身",icon:"🔥",items:[{id:"b01",text:"弹力带绕肩 10次"},{id:"b02",text:"轻量高位下拉 15次"}]},
+    {name:"必做",icon:"⭐",highlight:true,items:[{id:"b03",text:"面拉 2×15 (30)"}]},
+    {name:"正式训练",icon:"💪",items:[
+      {id:"b04",text:"引体向上 4×力竭 (20-15)"},
+      {id:"b05",text:"宽距高位下拉（正握）4×10-12 (上重量) (50-45)"},
+      {id:"b06",text:"直臂下拉 3×15 (30-25)"},
+      {id:"b07",text:"V字器械划船 3×10-12 (50)"},
+      {id:"b08",text:"蝴蝶机后束飞鸟 4×12-15 (30-25)"}
+    ]}
+  ]},
+  wed: {label:"周三",name:"腿 + 腹肌",sections:[
+    {name:"热身",icon:"🔥",items:[{id:"c01",text:"髋关节环绕 左右各10次"},{id:"c02",text:"徒手深蹲 20次"}]},
+    {name:"正式训练",icon:"💪",items:[
+      {id:"c03",text:"杠铃深蹲 4×6-10 (45)"},{id:"c04",text:"腿弯举 3×12 (40)"},
+      {id:"c05",text:"夹腿机 3×12 (40)"},{id:"c06",text:"悬垂举腿 4×12-15"},{id:"c07",text:"龙门架卷腹 3×20 (50-45)"}
+    ]}
+  ]},
+  thu: {label:"周四",name:"休息日",rest:true},
+  sun: {label:"周日",name:"肩 + 腹",sections:[
+    {name:"热身",icon:"🔥",items:[{id:"d01",text:"弹力带外旋 2×15"},{id:"d02",text:"2.5kg哑铃侧平举 20次"}]},
+    {name:"正式训练",icon:"💪",items:[
+      {id:"d03",text:"哑铃侧平举 (5kg-7.5kg) 4×12-15"},{id:"d04",text:"面拉 4×12-15"},
+      {id:"d05",text:"悬垂举腿 4×12"},{id:"d06",text:"龙门架卷腹 3×20"}
+    ]}
+  ]}
+};
+
+var dayMap = {1:"mon_fri",2:"tue_sat",3:"wed",4:"thu",5:"mon_fri",6:"tue_sat",0:"sun"};
+
+var todayKey = null, currentDay = null, currentWorkout = null, checked = {};
+
+var dateEl = document.getElementById("dateDisplay");
+var dayEl = document.getElementById("dayDisplay");
+var nameEl = document.getElementById("workoutName");
+var subEl = document.getElementById("workoutSub");
+var fillEl = document.getElementById("progressFill");
+var textEl = document.getElementById("progressText");
+var navEl = document.getElementById("dayNav");
+var contentEl = document.getElementById("content");
+var resetBtn = document.getElementById("resetBtn");
+var resetWorkoutBtn = document.getElementById("resetWorkoutBtn");
+var checkAllBtn = document.getElementById("checkAllBtn");
+var uncheckAllBtn = document.getElementById("uncheckAllBtn");
+
+function pad(n){return String(n).padStart(2,"0");}
+function fmtDate(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+
+function ckKey(s){return "fc_"+s;}
+function dtKey(k){return "fw_"+k;}
+
+function loadChecks(s){
+  try{var r=localStorage.getItem(ckKey(s));return r?JSON.parse(r):{};}
+  catch(e){return {};}
+}
+function saveChecks(s,d){localStorage.setItem(ckKey(s),JSON.stringify(d));}
+
+function loadWk(k){
+  try{var r=localStorage.getItem(dtKey(k));if(r)return JSON.parse(r);}catch(e){}
+  return JSON.parse(JSON.stringify(defaultWorkouts[k]));
+}
+function saveWk(k,d){localStorage.setItem(dtKey(k),JSON.stringify(d));}
+
+function flatItems(w){
+  if(!w||w.rest)return[];
+  var r=[];
+  for(var s=0;s<w.sections.length;s++){
+    var sec=w.sections[s];
+    if(!sec.items)continue;
+    for(var i=0;i<sec.items.length;i++)r.push({sec:sec,secIdx:s,item:sec.items[i]});
+  }
+  return r;
+}
+
+function renderNav(ak){
+  var keys=["sun","mon_fri","tue_sat","wed","thu","mon_fri","tue_sat"];
+  var ls=["周日","周一/五","周二/六","周三","周四","周一/五","周二/六"];
+  var ti=new Date().getDay(),html="";
+  for(var i=0;i<keys.length;i++){
+    var k=keys[i],wk=defaultWorkouts[k];
+    var label=wk&&wk.label?wk.label:ls[i];
+    var cls="day-btn"+(k===ak?" active":"")+(i===ti?" today":"");
+    html+='<button class="'+cls+'" data-key="'+k+'">'+label+"</button>";
+  }
+  navEl.innerHTML=html;
+  var bs=navEl.querySelectorAll(".day-btn");
+  for(var i=0;i<bs.length;i++)bs[i].addEventListener("click",function(){renderDay(this.dataset.key);});
+}
+
+function updProg(done,total){
+  var pct=total>0?(done/total)*100:0;
+  fillEl.style.width=pct+"%";
+  textEl.textContent=done+"/"+total+" 已完成";
+}
+
+function recalcProg(){
+  var items=flatItems(currentWorkout),done=0;
+  for(var i=0;i<items.length;i++)if(checked[items[i].item.id])done++;
+  updProg(done,items.length);
+}
+
+function toggleItem(id,val){
+  checked[id]=val;
+  saveChecks(fmtDate(new Date()),checked);
+}
+
+function renderDay(k){
+  currentDay=k;
+  currentWorkout=loadWk(k);
+  var w=currentWorkout;
+  var now=new Date(),ds=fmtDate(now),dow=now.getDay(),cn=DAYS_CN[dow];
+  dateEl.textContent=ds+" 星期"+cn;
+  checked=loadChecks(ds);
+
+  if(w&&w.rest){
+    dayEl.textContent="休息日";nameEl.textContent="🧘 休息日";
+    subEl.textContent="好好恢复，为下一次训练充电 💪";
+    fillEl.style.width="0%";textEl.textContent="今日休息";
+    contentEl.innerHTML='<div class="rest-card"><div class="rest-icon">🛌</div><div class="rest-title">好好休息</div><div class="rest-desc">让肌肉充分恢复，周四休息也是训练的一部分</div></div>';
+    document.getElementById("actionArea").style.display="none";
+    renderNav(k);return;
+  }
+  document.getElementById("actionArea").style.display="flex";
+
+  dayEl.textContent=w.label;nameEl.textContent="🏋️ "+w.name;subEl.textContent="";
+  var html="";
+
+  for(var s=0;s<w.sections.length;s++){
+    var sec=w.sections[s];
+    html+='<div class="section" data-section="'+s+'">';
+    html+='<div class="section-header'+(sec.highlight?" highlight":"")+'">';
+    html+='<span class="section-icon">'+(sec.icon||"📋")+"</span>";
+    html+='<span class="section-title">'+sec.name+"</span>";
+    if(sec.note)html+='<span class="section-note">— '+sec.note+"</span>";
+    html+='<button class="add-btn" data-section="'+s+'" title="添加动作">+</button></div>';
+
+    if(sec.items)for(var i=0;i<sec.items.length;i++){
+      var item=sec.items[i],done=checked[item.id]===true;
+      html+='<div class="exercise-item'+(done?" done":"")+'" data-id="'+item.id+'">';
+      html+='<div class="checkbox-wrap"><input type="checkbox" id="cb_'+item.id+'"'+(done?" checked":"")+'><label class="checkmark" for="cb_'+item.id+'"></label></div>';
+      html+='<div class="exercise-info"><span class="exercise-name">'+item.text+"</span></div>";
+      html+='<button class="del-btn" data-id="'+item.id+'" title="删除">\u00d7</button></div>';
+    }
+
+    html+='<div class="add-input-wrap" data-section="'+s+'">';
+    html+='<input type="text" placeholder="输入动作名称..." maxlength="80">';
+    html+='<button class="confirm-btn">添加</button>';
+    html+='<button class="cancel-btn">取消</button></div></div>';
+  }
+  contentEl.innerHTML=html;
+  renderNav(k);
+
+  var items_els=contentEl.querySelectorAll(".exercise-item");
+  for(var ei=0;ei<items_els.length;ei++)(function(el){
+    var id=el.dataset.id,cb=el.querySelector("input");
+    el.addEventListener("click",function(e){
+      if(e.target.tagName==="INPUT"||e.target.closest(".del-btn"))return;
+      cb.checked=!cb.checked;
+      toggleItem(id,cb.checked);
+      el.classList.toggle("done",cb.checked);
+      recalcProg();
+    });
+    cb.addEventListener("change",function(){
+      toggleItem(id,cb.checked);
+      el.classList.toggle("done",cb.checked);
+      recalcProg();
+    });
+  })(items_els[ei]);
+
+  var delBtns=contentEl.querySelectorAll(".del-btn");
+  for(var di=0;di<delBtns.length;di++)(function(btn){
+    btn.addEventListener("click",function(e){
+      e.stopPropagation();
+      var id=btn.dataset.id;
+      if(!confirm("确定删除这个动作？"))return;
+      if(!currentWorkout||!currentWorkout.sections)return;
+      for(var s=0;s<currentWorkout.sections.length;s++){
+        var sec=currentWorkout.sections[s];
+        if(!sec.items)continue;
+        for(var i=0;i<sec.items.length;i++)if(sec.items[i].id===id){
+          sec.items.splice(i,1);
+          delete checked[id];
+          saveChecks(fmtDate(new Date()),checked);
+          saveWk(currentDay,currentWorkout);
+          renderDay(currentDay);
+          return;
+        }
+      }
+    });
+  })(delBtns[di]);
+
+  var addBtns=contentEl.querySelectorAll(".add-btn");
+  for(var ai=0;ai<addBtns.length;ai++)(function(btn){
+    btn.addEventListener("click",function(e){
+      e.stopPropagation();
+      var si=btn.dataset.section;
+      var aw=contentEl.querySelectorAll(".add-input-wrap");
+      for(var wi=0;wi<aw.length;wi++)aw[wi].classList.remove("show");
+      var wrap=contentEl.querySelector('.add-input-wrap[data-section="'+si+'"]');
+      if(wrap){wrap.classList.add("show");var inp=wrap.querySelector("input");if(inp){inp.value="";inp.focus();}}
+    });
+  })(addBtns[ai]);
+
+  var cbs=contentEl.querySelectorAll(".confirm-btn");
+  for(var ci=0;ci<cbs.length;ci++)(function(btn){
+    btn.addEventListener("click",function(){
+      var wrap=btn.closest(".add-input-wrap");if(!wrap)return;
+      var inp=wrap.querySelector("input"),txt=inp?inp.value.trim():"";
+      if(!txt){inp.focus();return;}
+      var si=parseInt(wrap.dataset.section,10);
+      if(!currentWorkout||!currentWorkout.sections[si])return;
+      var ni={id:genId(),text:txt};
+      if(!currentWorkout.sections[si].items)currentWorkout.sections[si].items=[];
+      currentWorkout.sections[si].items.push(ni);
+      saveWk(currentDay,currentWorkout);
+      renderDay(currentDay);
+    });
+  })(cbs[ci]);
+
+  var xs=contentEl.querySelectorAll(".cancel-btn");
+  for(var xi=0;xi<xs.length;xi++)(function(btn){
+    btn.addEventListener("click",function(){var w=btn.closest(".add-input-wrap");if(w)w.classList.remove("show");});
+  })(xs[xi]);
+
+  var ins=contentEl.querySelectorAll(".add-input-wrap input");
+  for(var ii=0;ii<ins.length;ii++)(function(inp){
+    inp.addEventListener("keydown",function(e){
+      if(e.key==="Enter"){var w=inp.closest(".add-input-wrap");if(w){var cb=w.querySelector(".confirm-btn");if(cb)cb.click();}}
+      if(e.key==="Escape"){var w=inp.closest(".add-input-wrap");if(w){var xb=w.querySelector(".cancel-btn");if(xb)xb.click();}}
+    });
+  })(ins[ii]);
+
+  var all=flatItems(currentWorkout),dc=0;
+  for(var fi=0;fi<all.length;fi++)if(checked[all[fi].item.id])dc++;
+  updProg(dc,all.length);
+}
+
+function init(){
+  var now=new Date(),dow=now.getDay();
+  todayKey=dayMap[dow];currentDay=todayKey;
+  renderDay(todayKey);
+
+  resetBtn.addEventListener("click",function(){
+    if(!confirm("确定重置今日所有打卡记录？"))return;
+    checked={};saveChecks(fmtDate(new Date()),{});
+    renderDay(currentDay);
+  });
+
+  resetWorkoutBtn.addEventListener("click",function(){
+    if(!confirm("确定恢复默认动作列表？这将删除所有自定义添加的动作。"))return;
+    currentWorkout=JSON.parse(JSON.stringify(defaultWorkouts[currentDay]));
+    saveWk(currentDay,currentWorkout);
+    var newIds={},flat=flatItems(currentWorkout);
+    for(var i=0;i<flat.length;i++)newIds[flat[i].item.id]=true;
+    var ds=fmtDate(new Date()),clean={};
+    for(var id in checked)if(newIds[id])clean[id]=checked[id];
+    checked=clean;saveChecks(ds,checked);
+    renderDay(currentDay);
+  });
+
+  checkAllBtn.addEventListener("click",function(){
+    var w=currentWorkout;if(!w||w.rest)return;
+    var items=flatItems(w),ds=fmtDate(new Date());
+    for(var i=0;i<items.length;i++)checked[items[i].item.id]=true;
+    saveChecks(ds,checked);
+    renderDay(currentDay);
+  });
+
+  uncheckAllBtn.addEventListener("click",function(){
+    var w=currentWorkout;if(!w||w.rest)return;
+    var items=flatItems(w),ds=fmtDate(new Date());
+    for(var i=0;i<items.length;i++)delete checked[items[i].item.id];
+    saveChecks(ds,checked);
+    renderDay(currentDay);
+  });
+}
+
+init();
+</script>
+</body>
+</html>
