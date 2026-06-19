@@ -164,7 +164,7 @@ function loadDayCount(){try{var r=localStorage.getItem(getDayCountKey());if(r)re
 function saveDayCount(d){localStorage.setItem(getDayCountKey(),JSON.stringify(d));}
 function tryAddDay(){var t=new Date();var ys=t.getFullYear();var ms=String(t.getMonth()+1).padStart(2,"0");var ds=String(t.getDate()).padStart(2,"0");var dateStr=ys+"-"+ms+"-"+ds;if(dateStr!==dayCount.lastDate){dayCount.total++;dayCount.lastDate=dateStr;saveDayCount(dayCount);}}
 
-var dayMap = {1:"mon_fri",2:"tue_sat",3:"sun",4:"thu",5:"mon_fri",6:"wed",0:"tue_sat"};
+var dayMap = {1:"mon_fri",2:"tue_sat",3:"wed",4:"thu",5:"mon_fri",6:"tue_sat",0:"sun"};
 
 var todayKey = null, currentDay = null, currentWorkout = null, checked = {};
 
@@ -211,12 +211,12 @@ function flatItems(w){
 }
 
 function renderNav(ak){
-  var keys=["tue_sat","mon_fri","tue_sat","sun","thu","mon_fri","wed"];
-  var ls=["周日","周一","周二","周三","周四","周五","周六"];
+  var keys=["sun","mon_fri","tue_sat","wed","thu","mon_fri","tue_sat"];
+  var ls=["周日","周一/五","周二/六","周三","周四","周一/五","周二/六"];
   var ti=new Date().getDay(),html="";
   for(var i=0;i<keys.length;i++){
     var k=keys[i],wk=defaultWorkouts[k];
-    var label=ls[i];
+    var label=wk&&wk.label?wk.label:ls[i];
     var cls="day-btn"+(k===ak?" active":"")+(i===ti?" today":"");
     html+='<button class="'+cls+'" data-key="'+k+'">'+label+"</button>";
   }
@@ -260,7 +260,7 @@ function renderDay(k){
   }
   document.getElementById("actionArea").style.display="flex";
 
-  dayEl.textContent=["周日","周一","周二","周三","周四","周五","周六"][dow];nameEl.textContent="🏋️ "+w.name;subEl.textContent="";
+  dayEl.textContent=w.label;nameEl.textContent="🏋️ "+w.name;subEl.textContent="";
   var html="";
 
   for(var s=0;s<w.sections.length;s++){
