@@ -62,7 +62,7 @@
     .action-btn.check-all{background:#10b981;color:#fff}
     .action-btn.check-all:hover{background:#059669}
     .action-btn.uncheck-all{background:#e2e8f0;color:#475569}
-    .action-btn.uncheck-all:hover{background:#cbd5e1}
+    .action-btn.uncheck-all:hover{background:#cbd5e1}.action-btn.rest-check{background:#6366f1;color:#fff}.action-btn.rest-check:hover{background:#4f46e5}.action-btn.rest-check.done{background:#10b981;cursor:default}
     .reset-area{display:flex;justify-content:center;gap:12px;margin-top:20px}
     .reset-btn{padding:8px 24px;border:1px solid #cbd5e1;border-radius:24px;background:#fff;color:#64748b;font-size:13px;cursor:pointer;transition:all .2s}
     .reset-btn:hover{background:#f1f5f9;border-color:#94a3b8;color:#475569}
@@ -106,6 +106,7 @@
   <div class="actions" id="actionArea">
     <button class="action-btn check-all" id="checkAllBtn">✅ 一键全部打卡</button>
     <button class="action-btn uncheck-all" id="uncheckAllBtn">↩️ 取消全部</button>
+    <button class="action-btn rest-check" id="restAnyBtn">💭 休息打卡</button>
   </div>
   <div id="content"></div>
   <div class="reset-area">
@@ -254,14 +255,10 @@ function renderDay(k){
     dayEl.textContent="休息日";nameEl.textContent="🧘 休息日";
     subEl.textContent="好好恢复，为下一次训练充电 💪";
     fillEl.style.width="0%";textEl.textContent="今日休息";
-    contentEl.innerHTML='<div class="rest-card"><div class="rest-icon">🛌</div><div class="rest-title">好好休息</div><div class="rest-desc">让肌肉充分恢复，休息也是训练的一部分</div></div><div class="rest-checkin"><button class="rest-checkin-btn" id="restBtn">🔑 休息打卡 也算一天</button></div>';
-  document.getElementById("actionArea").style.display="none";
-  var rb=document.getElementById("restBtn");
-  rb.addEventListener("click",function(){if(rb.classList.contains("done"))return;tryAddDay();dayCounterEl.textContent="💪 健身第 "+dayCount.total+" 天";rb.innerHTML="✅ 今日已打卡休息";rb.classList.add("done");});
-    document.getElementById("actionArea").style.display="none";
+    contentEl.innerHTML='<div class="rest-card"><div class="rest-icon">🛌</div><div class="rest-title">好好休息</div><div class="rest-desc">让肌肉充分恢复，休息也是训练的一部分</div></div>';
+  
     renderNav(k);return;
   }
-  document.getElementById("actionArea").style.display="flex";
 
   dayEl.textContent=["周日","周一","周二","周三","周四","周五","周六"][dow];nameEl.textContent="🏋️ "+w.name;subEl.textContent="";
   var html="";
@@ -407,6 +404,8 @@ function init(){
     saveChecks(ds,checked);
     renderDay(currentDay);
   });
+
+  restAnyBtn.addEventListener("click",function(){if(this.classList.contains("done"))return;tryAddDay();dayCounterEl.textContent="💪 健身第 "+dayCount.total+" 天";this.innerHTML="✅ 今日已打卡";this.classList.add("done");});
 
   uncheckAllBtn.addEventListener("click",function(){
     var w=currentWorkout;if(!w||w.rest)return;
