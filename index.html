@@ -59,7 +59,7 @@
     .exercise-name{font-size:15px;font-weight:500;color:#1e293b;line-height:1.4}
     .del-btn{flex-shrink:0;width:24px;height:24px;border-radius:6px;border:none;background:transparent;color:#cbd5e1;font-size:14px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:all .2s}
     .exercise-item:hover .del-btn{opacity:1}
-    .del-btn:hover{background:#fee2e2;color:#ef4444}
+    .del-btn:hover{background:#fee2e2;color:#ef4444}.edit-btn{flex-shrink:0;width:24px;height:24px;border-radius:6px;border:none;background:transparent;color:#cbd5e1;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:all .2s}.exercise-item:hover .edit-btn{opacity:1}.edit-btn:hover{background:#dbeafe;color:#3b82f6}.exercise-item .edit-input{flex:1;padding:4px 10px;border:2px solid #3b82f6;border-radius:8px;font-size:14px;outline:none;background:#fff;min-width:0}.edit-actions{display:flex;gap:4px;flex-shrink:0}.save-btn{width:24px;height:24px;border-radius:6px;border:none;background:#10b981;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}.save-btn:hover{background:#059669}.cancel-btn{width:24px;height:24px;border-radius:6px;border:none;background:#e2e8f0;color:#64748b;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}.cancel-btn:hover{background:#cbd5e1}
     .actions{display:flex;gap:8px;margin-bottom:16px}
     .action-btn{flex:1;padding:10px 16px;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
     .action-btn.check-all{background:#10b981;color:#fff}
@@ -293,7 +293,7 @@ function renderDay(k){
       html+='<div class="exercise-item'+(done?" done":"")+'" data-id="'+item.id+'">';
       html+='<div class="checkbox-wrap"><input type="checkbox" id="cb_'+item.id+'"'+(done?" checked":"")+'><label class="checkmark" for="cb_'+item.id+'"></label></div>';
       html+='<div class="exercise-info"><span class="exercise-name">'+item.text+"</span></div>";
-      html+='<button class="del-btn" data-id="'+item.id+'" title="删除">\u00d7</button></div>';
+      html+='<div class="edit-actions"><button class="edit-btn" data-id="'+item.id+'" title="编辑">\u270e</button><button class="del-btn" data-id="'+item.id+'" title="删除">\u00d7</button></div></div>';
     }
 
     html+='<div class="add-input-wrap" data-section="'+s+'">';
@@ -308,7 +308,7 @@ function renderDay(k){
   for(var ei=0;ei<items_els.length;ei++)(function(el){
     var id=el.dataset.id,cb=el.querySelector("input");
     el.addEventListener("click",function(e){
-      if(e.target.tagName==="INPUT"||e.target.closest(".del-btn"))return;
+      if(e.target.tagName==="INPUT"||e.target.closest(".del-btn")||e.target.closest(".edit-btn")||e.target.closest(".save-btn")||e.target.closest(".cancel-btn"))return;
       cb.checked=!cb.checked;
       toggleItem(id,cb.checked);
       el.classList.toggle("done",cb.checked);
@@ -342,6 +342,53 @@ function renderDay(k){
       }
     });
   })(delBtns[di]);
+
+  // Edit button handlers
+  var editBtns=contentEl.querySelectorAll(".edit-btn");
+  for(var ei=0;ei<editBtns.length;ei++)(function(btn){
+    btn.addEventListener("click",function(e){
+      e.stopPropagation();
+      var id=btn.dataset.id;
+      var itemEl=btn.closest(".exercise-item");
+      var nameEl=itemEl.querySelector(".exercise-name");
+      var infoEl=itemEl.querySelector(".exercise-info");
+      var currentText=nameEl.textContent;
+      infoEl.innerHTML='<input class="edit-input" type="text" maxlength="80" value="'+currentText.replace(/"/g,"&quot;")+'">';
+      var input=infoEl.querySelector("input");
+      input.focus();
+      input.select();
+      // Replace edit/del buttons with save/cancel
+      var actions=itemEl.querySelector(".edit-actions");
+      actions.innerHTML='<button class="save-btn" title="保存">\u2713</button><button class="cancel-btn" title="取消">\u2715</button>';
+      // Save
+      actions.querySelector(".save-btn").addEventListener("click",function(ev){
+        ev.stopPropagation();
+        var newText=input.value.trim();
+        if(!newText){input.focus();return;}
+        if(!currentWorkout||!currentWorkout.sections)return;
+        for(var s=0;s<currentWorkout.sections.length;s++){
+          var sec=currentWorkout.sections[s];
+          if(!sec.items)continue;
+          for(var i=0;i<sec.items.length;i++)if(sec.items[i].id===id){
+            sec.items[i].text=newText;
+            saveWk(currentDay,currentWorkout);
+            renderDay(currentDay);
+            return;
+          }
+        }
+      });
+      // Cancel
+      actions.querySelector(".cancel-btn").addEventListener("click",function(ev){
+        ev.stopPropagation();
+        renderDay(currentDay);
+      });
+      // Enter = save, Escape = cancel
+      input.addEventListener("keydown",function(ke){
+        if(ke.key==="Enter"){if(actions.querySelector(".save-btn"))actions.querySelector(".save-btn").click();}
+        if(ke.key==="Escape"){if(actions.querySelector(".cancel-btn"))actions.querySelector(".cancel-btn").click();}
+      });
+    });
+  })(editBtns[ei]);
 
   var addBtns=contentEl.querySelectorAll(".add-btn");
   for(var ai=0;ai<addBtns.length;ai++)(function(btn){
