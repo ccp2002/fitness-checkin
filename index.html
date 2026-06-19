@@ -165,7 +165,21 @@ function loadDayCount(){try{var r=localStorage.getItem(getDayCountKey());if(r)re
 function saveDayCount(d){localStorage.setItem(getDayCountKey(),JSON.stringify(d));}
 function tryAddDay(){var t=new Date();var ys=t.getFullYear();var ms=String(t.getMonth()+1).padStart(2,"0");var ds=String(t.getDate()).padStart(2,"0");var dateStr=ys+"-"+ms+"-"+ds;if(dateStr!==dayCount.lastDate){dayCount.total++;dayCount.lastDate=dateStr;saveDayCount(dayCount);}}
 
-var dayMap = {1:"mon_fri",2:"tue_sat",3:"sun",4:"thu",5:"tue_sat",6:"wed",0:"thu"};
+/* 8-day cycle: 2 cycles = 1 unit, 练三休一 */
+var cycleStart = new Date(2026,5,16); // June 16 = Day 1
+var cycleLen = 8;
+var cycleKeys = ["mon_fri","tue_sat","wed","thu","sun","mon_fri","tue_sat","thu"];
+var cycleLabels = ["第1天","第2天","第3天","第4天","第5天","第6天","第7天","第8天"];
+var cycleRest = [false,false,false,true,false,false,false,true];
+
+function getCycleDay(today){
+  var diff = Math.floor((today - cycleStart) / 86400000);
+  var idx = ((diff % cycleLen) + cycleLen) % cycleLen;
+  return idx;
+}
+
+var cycleNames = ["胸+三头+肩前中束","背+二头+肩后束","腿+腹肌","休息日","肩+腹","胸+三头+肩前中束","背+二头+肩后束","休息日"];
+
 
 var todayKey = null, currentDay = null, currentWorkout = null, checked = {};
 
@@ -212,21 +226,19 @@ function flatItems(w){
 }
 
 function renderNav(ak){
-  var keys=["thu","mon_fri","tue_sat","sun","thu","tue_sat","wed"];
-  var ls=["周日","周一","周二","周三","周四","周五","周六"];
-  var ti=new Date().getDay(),html="";
-  for(var i=0;i<keys.length;i++){
-    var k=keys[i],wk=defaultWorkouts[k];
-    var label=ls[i];
-    var cls="day-btn"+(k===ak?" active":"")+(i===ti?" today":"");
-    html+='<button class="'+cls+'" data-key="'+k+'">'+label+"</button>";
+  var ci = getCycleDay(new Date());
+  var html="";
+  for(var i=0;i<cycleLen;i++){
+    var label=cycleLabels[i];
+    var cls="day-btn";
+    if(cycleKeys[i]===ak)cls+=" active";
+    if(i===ci)cls+=" today";
+    html+='<button class="'+cls+'" data-key="'+cycleKeys[i]+'">'+label+'</button>';
   }
   navEl.innerHTML=html;
   var bs=navEl.querySelectorAll(".day-btn");
   for(var i=0;i<bs.length;i++)bs[i].addEventListener("click",function(){renderDay(this.dataset.key);});
-}
-
-function updProg(done,total){
+}function updProg(done,total){
   var pct=total>0?(done/total)*100:0;
   fillEl.style.width=pct+"%";
   textEl.textContent=done+"/"+total+" 已完成";
@@ -248,10 +260,11 @@ function renderDay(k){
   currentWorkout=loadWk(k);
   var w=currentWorkout;
   var now=new Date(),ds=fmtDate(now),dow=now.getDay(),cn=DAYS_CN[dow];
-  dateEl.textContent=ds+" 星期"+cn;
+  var ci=getCycleDay(now);
+  dateEl.textContent=ds+" "+cycleLabels[ci];
   checked=loadChecks(ds);
 
-  if(w&&w.rest){
+  if(cycleRest[ci]){
     dayEl.textContent="休息日";nameEl.textContent="🧘 休息日";
     subEl.textContent="好好恢复，为下一次训练充电 💪";
     fillEl.style.width="0%";textEl.textContent="今日休息";
@@ -260,7 +273,7 @@ function renderDay(k){
     renderNav(k);return;
   }
 
-  dayEl.textContent=["周日","周一","周二","周三","周四","周五","周六"][dow];nameEl.textContent="🏋️ "+w.name;subEl.textContent="";
+  dayEl.textContent=cycleLabels[ci];nameEl.textContent="🏋️ "+w.name;subEl.textContent="";
   var html="";
 
   for(var s=0;s<w.sections.length;s++){
@@ -375,7 +388,7 @@ function renderDay(k){
 
 function init(){
   var now=new Date(),dow=now.getDay();
-  todayKey=dayMap[dow];currentDay=todayKey;
+  todayKey=cycleKeys[getCycleDay(new Date())];currentDay=todayKey;
   dayCounterEl.textContent = "💪 健身第 " + dayCount.total + " 天";
   renderDay(todayKey);
 
