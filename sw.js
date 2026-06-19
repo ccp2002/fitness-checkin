@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "fitness-v1";
+﻿const CACHE_NAME = "fitness-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -15,7 +15,13 @@ self.addEventListener("install", (e) => {
 });
 
 self.addEventListener("activate", (e) => {
-  e.waitUntil(clients.claim());
+  e.waitUntil(
+    caches.keys().then(function(names) {
+      return Promise.all(
+        names.filter(function(n) { return n !== CACHE_NAME; }).map(function(n) { return caches.delete(n); })
+      );
+    }).then(function() { return clients.claim(); })
+  );
 });
 
 self.addEventListener("fetch", (e) => {
