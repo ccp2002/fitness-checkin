@@ -166,9 +166,9 @@ function saveDayCount(d){localStorage.setItem(getDayCountKey(),JSON.stringify(d)
 function tryAddDay(){var t=new Date();var ys=t.getFullYear();var ms=String(t.getMonth()+1).padStart(2,"0");var ds=String(t.getDate()).padStart(2,"0");var dateStr=ys+"-"+ms+"-"+ds;if(dateStr!==dayCount.lastDate){dayCount.total++;dayCount.lastDate=dateStr;saveDayCount(dayCount);}}
 
 /* 8-day cycle: 2 cycles = 1 unit, 练三休一 */
-var cycleStart = new Date(2026,5,16); // June 16 = Day 1
+var cycleStart = new Date(2026,5,10); // June 10 = Day 1
 var cycleLen = 8;
-var cycleKeys = ["mon_fri","tue_sat","wed","thu","sun","mon_fri","tue_sat","thu"];
+var cycleKeys = ["mon_fri","tue_sat","wed","thu","mon_fri","tue_sat","sun","thu"];
 var cycleLabels = ["第1天","第2天","第3天","第4天","第5天","第6天","第7天","第8天"];
 var cycleRest = [false,false,false,true,false,false,false,true];
 
@@ -178,7 +178,7 @@ function getCycleDay(today){
   return idx;
 }
 
-var cycleNames = ["胸+三头+肩前中束","背+二头+肩后束","腿+腹肌","休息日","肩+腹","胸+三头+肩前中束","背+二头+肩后束","休息日"];
+var cycleNames = ["胸+三头+肩前中束","背+二头+肩后束","腿+腹肌","休息日","胸+三头+肩前中束","背+二头+肩后束","肩+腹","休息日"];
 
 
 var todayKey = null, currentDay = null, currentWorkout = null, checked = {};
